@@ -3,12 +3,11 @@ name: Build GT2e Navigation APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: read
@@ -28,17 +27,22 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK 35
+      - name: Check Android SDK
         run: |
-          sdkmanager --install \
+          echo "SDK: $ANDROID_HOME"
+          test -d "$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms"
+
+      - name: Install SDK 35
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
       - name: Build Debug APK
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
